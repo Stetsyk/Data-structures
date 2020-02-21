@@ -1,105 +1,107 @@
 #pragma once
 
-#include <assert.h>
 #include <sstream>
-#include <string>
+#include <stdexcept>
 #include <iostream>
-#include <vector>
-#include <set>
 #include <map>
+#include <set>
+#include <string>
+#include <vector>
+#include <unordered_map>
 
 using namespace std;
 
-template < class T >
-std::ostream &operator << (std::ostream &os, const std::vector < T > &data) {
-    os << "[";
-    bool first = true;
-
-    for (const auto &item : data) {
-        if (!first) {
-            os << ",";
-        } else {
-            first = false;
-        }
-        os << item;
-    }
-    os << "]";
-
-    return os;
-}
-
-template < class T >
-std::ostream &operator << (std::ostream &os, const std::set < T > &data) {
-    os << "(";
-    bool first = true;
-
-    for (const auto &item : data) {
-        if (!first) {
-            os << ",";
-        } else {
-            first = false;
-        }
-        os << item;
-    }
-    os << ")";
-
-    return os;
-}
-
-template < class T , class V >
-std::ostream &operator << (std::ostream &os, const std::map < T , V > &data) {
+template <class T>
+ostream& operator << (ostream& os, const vector<T>& s) {
     os << "{";
     bool first = true;
-
-    for (const auto &item : data) {
+    for (const auto& x : s) {
         if (!first) {
-            os << ",";
-        } else {
-            first = false;
+            os << ", ";
         }
-        os << item.first << ":" << item.second;
+        first = false;
+        os << x;
     }
-    os << "}";
-
-    return os;
+    return os << "}";
 }
 
-template < class T, class U >
-void AssertEqual(const T& t, const U& u, const std::string& hint = {}) {
-    if (t != u) {
-        std::ostringstream os;
+template <class T>
+ostream& operator << (ostream& os, const set<T>& s) {
+    os << "{";
+    bool first = true;
+    for (const auto& x : s) {
+        if (!first) {
+            os << ", ";
+        }
+        first = false;
+        os << x;
+    }
+    return os << "}";
+}
+
+template <class K, class V>
+ostream& operator << (ostream& os, const map<K, V>& m) {
+    os << "{";
+    bool first = true;
+    for (const auto& kv : m) {
+        if (!first) {
+            os << ", ";
+        }
+        first = false;
+        os << kv.first << ": " << kv.second;
+    }
+    return os << "}";
+}
+
+template <class K, class V, typename Hash = std::hash<K>>
+ostream& operator << (ostream& os, const unordered_map<K, V, Hash> & m) {
+    os << "{";
+    bool first = true;
+    for (const auto& kv : m) {
+        if (!first) {
+            os << ", ";
+        }
+        first = false;
+        os << kv.first << ": " << kv.second;
+    }
+    return os << "}";
+}
+
+template<class T, class U>
+void AssertEqual(const T& t, const U& u, const string& hint = {}) {
+    if (!(t == u)) {
+        ostringstream os;
         os << "Assertion failed: " << t << " != " << u;
         if (!hint.empty()) {
             os << " hint: " << hint;
         }
-        throw std::runtime_error(os.str());
+        throw runtime_error(os.str());
     }
 }
 
-void Assert(bool b, const std::string& hint);
-//    {
-//    AssertEqual(b, true, hint);
-//}
+inline void Assert(bool b, const string& hint) {
+    AssertEqual(b, true, hint);
+}
 
 class TestRunner {
 public:
-    template < class TestFunc >
-    void RunTest(TestFunc func, const std::string& test_name) {
+    template <class TestFunc>
+    void RunTest(TestFunc func, const string& test_name) {
         try {
             func();
-            std::cerr << test_name << " OK" << std::endl;
-        } catch (std::exception& e) {
+            cerr << test_name << " OK" << endl;
+        } catch (exception& e) {
             ++fail_count;
-            std::cerr << test_name << " fail: " << e.what() << std::endl;
+            cerr << test_name << " fail: " << e.what() << endl;
         } catch (...) {
             ++fail_count;
-            std::cerr << "Unknown exception caught" << std::endl;
+            cerr << "Unknown exception caught" << endl;
         }
     }
 
     ~TestRunner() {
         if (fail_count > 0) {
-            std::cerr << fail_count << " unit tests failed. Terminate" << std::endl;
+            cerr << fail_count << " unit tests failed. Terminate" << endl;
             exit(1);
         }
     }
@@ -107,3 +109,20 @@ public:
 private:
     int fail_count = 0;
 };
+
+#define ASSERT_EQUAL(x, y) {            \
+  ostringstream os;                     \
+  os << #x << " != " << #y << ", "      \
+    << __FILE__ << ":" << __LINE__;     \
+  AssertEqual(x, y, os.str());          \
+}
+
+#define ASSERT(x) {                     \
+  ostringstream os;                     \
+  os << #x << " is false, "             \
+    << __FILE__ << ":" << __LINE__;     \
+  Assert(x, os.str());                  \
+}
+
+#define RUN_TEST(tr, func) \
+  tr.RunTest(func, #func)

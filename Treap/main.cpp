@@ -104,13 +104,13 @@ void TestTreap(){
     testVector.push_back(INT_MAX);
 
     for(int i = 0; i < 100; i += 10){
-        AssertEqual(lowerBound(head, i),
-                *lower_bound(testVector.begin(), testVector.end(), i), "TestLowerBound");
+        ASSERT_EQUAL(lowerBound(head, i),
+                *lower_bound(testVector.begin(), testVector.end(), i));
     }
 }
 
 int main() {
     TestRunner tr;
-    tr.RunTest(TestTreap, "TestTreap");
+    RUN_TEST(tr, TestTreap);
     return 0;
 }
